@@ -1,19 +1,101 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { signIn, signUp, type AuthState } from "@/app/actions/auth";
+import { type FormEvent, useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
+import { signUp, type AuthState } from "@/app/actions/auth";
 import { translatedMessage, useLanguage } from "@/components/language-provider";
 import { StatusMessage } from "@/components/section";
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 const initialState: AuthState = { ok: false, message: "" };
 
+function getAuthErrorDetails(error: unknown) {
+  const record = error && typeof error === "object" ? (error as Record<string, unknown>) : {};
+
+  return {
+    message: error instanceof Error ? error.message : typeof record.message === "string" ? record.message : String(error),
+    status: typeof record.status === "number" || typeof record.status === "string" ? record.status : undefined,
+    code: typeof record.code === "string" ? record.code : undefined,
+  };
+}
+
+function isInvalidCredentials(error: unknown) {
+  const details = getAuthErrorDetails(error);
+  const status = typeof details.status === "string" ? Number(details.status) : details.status;
+  const message = details.message.toLowerCase();
+  const code = details.code?.toLowerCase() ?? "";
+
+  return (
+    status === 400 ||
+    status === 401 ||
+    status === 403 ||
+    code.includes("invalid_credentials") ||
+    message.includes("invalid login credentials") ||
+    message.includes("invalid credentials")
+  );
+}
+
 export function LoginPanel() {
+  const router = useRouter();
   const { t } = useLanguage();
   const [mode, setMode] = useState<"login" | "signup">("login");
-  const [loginState, loginAction, loginPending] = useActionState(signIn, initialState);
+  const [loginState, setLoginState] = useState<AuthState>(initialState);
+  const [loginPending, setLoginPending] = useState(false);
   const [signUpState, signUpAction, signUpPending] = useActionState(signUp, initialState);
   const state = mode === "login" ? loginState : signUpState;
   const pending = mode === "login" ? loginPending : signUpPending;
+
+  async function handleLoginSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoginState(initialState);
+
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+
+    if (!email || !password) {
+      setLoginState({
+        ok: false,
+        message: "Please enter your email and password.",
+        messageKey: "message.loginMissing",
+      });
+      return;
+    }
+
+    setLoginPending(true);
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        console.error("[auth] Browser signInWithPassword failed.", getAuthErrorDetails(error));
+        const invalidCredentials = isInvalidCredentials(error);
+
+        setLoginState({
+          ok: false,
+          message: invalidCredentials
+            ? "Incorrect email or password. Please try again."
+            : "Something went wrong. Please try again.",
+          messageKey: invalidCredentials ? "message.loginIncorrect" : "message.loginUnexpected",
+        });
+        return;
+      }
+
+      console.info("[auth] Browser signInWithPassword succeeded.");
+      router.refresh();
+      router.push("/account");
+    } catch (error) {
+      console.error("[auth] Unexpected browser sign in exception.", getAuthErrorDetails(error));
+      setLoginState({
+        ok: false,
+        message: "Something went wrong. Please try again.",
+        messageKey: "message.loginUnexpected",
+      });
+    } finally {
+      setLoginPending(false);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-xl rounded-lg border border-sky-100 bg-white p-6 shadow-sm shadow-sky-100">
@@ -36,7 +118,12 @@ export function LoginPanel() {
         </button>
       </div>
 
-      <form action={mode === "login" ? loginAction : signUpAction} noValidate className="space-y-4">
+      <form
+        action={mode === "signup" ? signUpAction : undefined}
+        onSubmit={mode === "login" ? handleLoginSubmit : undefined}
+        noValidate
+        className="space-y-4"
+      >
         {mode === "signup" ? (
           <>
             <label className="block text-sm font-semibold text-slate-700">

@@ -6,7 +6,6 @@ import type { Database } from "@/lib/types";
 type SupabaseServerClientOptions = {
   cookieWriteContext?: string;
   logCookieWrites?: boolean;
-  throwOnCookieWriteError?: boolean;
 };
 
 function getErrorDetails(error: unknown) {
@@ -51,7 +50,7 @@ export async function createSupabaseServerClient(options: SupabaseServerClientOp
               cookieStore.set(name, value, options);
             });
           } catch (error) {
-            if (options.throwOnCookieWriteError || options.cookieWriteContext) {
+            if (options.cookieWriteContext) {
               console.error("[auth] Failed to write Supabase auth cookies.", {
                 context: options.cookieWriteContext ?? "unspecified",
                 cookieCount: cookiesToSet.length,
@@ -59,10 +58,6 @@ export async function createSupabaseServerClient(options: SupabaseServerClientOp
                 error: getErrorDetails(error),
                 supabase: getSupabaseConfigDiagnostics(),
               });
-            }
-
-            if (options.throwOnCookieWriteError) {
-              throw error;
             }
 
             // Server Components can read cookies but cannot always set them.

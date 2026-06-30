@@ -3,7 +3,6 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getSupabaseConfigDiagnostics } from "@/lib/config";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { TranslationKey } from "@/lib/i18n";
 
@@ -34,27 +33,6 @@ function getAuthErrorDetails(error: unknown) {
     code: typeof record.code === "string" ? record.code : undefined,
     cause: cause ? { name: cause.name, message: cause.message } : undefined,
   };
-}
-
-function logAuthError(context: string, error: unknown) {
-  console.error(`[auth] ${context}`, {
-    error: getAuthErrorDetails(error),
-    supabase: getSupabaseConfigDiagnostics(),
-  });
-}
-
-function isCredentialError(error: unknown) {
-  const details = getAuthErrorDetails(error);
-  const message = details.message.toLowerCase();
-  const status = typeof details.status === "string" ? Number(details.status) : details.status;
-
-  return (
-    status === 400 ||
-    status === 401 ||
-    status === 403 ||
-    message.includes("invalid login credentials") ||
-    message.includes("invalid credentials")
-  );
 }
 
 async function ensureProfileAfterSignIn(
@@ -104,89 +82,6 @@ async function ensureProfileAfterSignIn(
     userId,
     role: repairedProfile?.role ?? null,
   });
-}
-
-export async function signIn(_prevState: AuthState, formData: FormData): Promise<AuthState> {
-  const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-
-  if (!email || !password) {
-    return {
-      ok: false,
-      message: "Please enter your email and password.",
-      messageKey: "message.loginMissing",
-    };
-  }
-
-  const parsed = loginSchema.safeParse({
-    email,
-    password,
-  });
-
-  if (!parsed.success) {
-    return {
-      ok: false,
-      message: "Incorrect email or password. Please try again.",
-      messageKey: "message.loginIncorrect",
-    };
-  }
-
-  const supabase = await createSupabaseServerClient({
-    cookieWriteContext: "signIn",
-    logCookieWrites: true,
-    throwOnCookieWriteError: true,
-  });
-  if (!supabase) {
-    console.error("[auth] Sign in attempted without valid Supabase environment configuration.", {
-      supabase: getSupabaseConfigDiagnostics(),
-    });
-    return {
-      ok: false,
-      message: "Something went wrong. Please try again.",
-      messageKey: "message.loginUnexpected",
-    };
-  }
-
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: parsed.data.email,
-      password: parsed.data.password,
-    });
-
-    if (error) {
-      logAuthError("Supabase signInWithPassword failed.", error);
-      const isIncorrectLogin = isCredentialError(error);
-
-      return {
-        ok: false,
-        message: isIncorrectLogin
-          ? "Incorrect email or password. Please try again."
-          : "Something went wrong. Please try again.",
-        messageKey: isIncorrectLogin ? "message.loginIncorrect" : "message.loginUnexpected",
-      };
-    }
-
-    console.info("[auth] Supabase signInWithPassword succeeded.", {
-      userId: data.user?.id ?? null,
-      hasSession: Boolean(data.session),
-      hasAccessToken: Boolean(data.session?.access_token),
-      supabase: getSupabaseConfigDiagnostics(),
-    });
-
-    if (data.user?.id) {
-      await ensureProfileAfterSignIn(supabase, data.user.id);
-    }
-  } catch (error) {
-    logAuthError("Unexpected sign in exception.", error);
-    return {
-      ok: false,
-      message: "Something went wrong. Please try again.",
-      messageKey: "message.loginUnexpected",
-    };
-  }
-
-  revalidatePath("/", "layout");
-  redirect("/account");
 }
 
 export async function signUp(_prevState: AuthState, formData: FormData): Promise<AuthState> {
