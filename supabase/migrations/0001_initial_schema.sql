@@ -439,12 +439,15 @@ set search_path = public
 as $$
 declare
   v_slot_id uuid;
+  v_starts_at timestamptz;
 begin
   if not public.is_admin() then
     raise exception 'Admin access required.';
   end if;
 
-  if p_starts_at_local at time zone 'America/Chicago' <= now() then
+  v_starts_at := p_starts_at_local at time zone 'America/Chicago';
+
+  if v_starts_at <= now() then
     raise exception 'Availability must be in the future.';
   end if;
 
@@ -457,8 +460,17 @@ begin
     raise exception 'Choose an active instructor.';
   end if;
 
+  if exists (
+    select 1
+    from public.availability_slots
+    where instructor_id = p_instructor_id
+      and starts_at = v_starts_at
+  ) then
+    raise exception 'This instructor already has a slot at that time.';
+  end if;
+
   insert into public.availability_slots (instructor_id, starts_at)
-  values (p_instructor_id, p_starts_at_local at time zone 'America/Chicago')
+  values (p_instructor_id, v_starts_at)
   returning id into v_slot_id;
 
   return v_slot_id;
@@ -466,6 +478,78 @@ end;
 $$;
 
 revoke all on function public.create_availability_slot(uuid, timestamp without time zone) from public;
+
+create or replace function public.delete_availability_slot(p_slot_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_deleted_id uuid;
+begin
+  if not public.is_admin() then
+    raise exception 'Admin access required.';
+  end if;
+
+  if exists (
+    select 1
+    from public.bookings
+    where availability_slot_id = p_slot_id
+  ) then
+    raise exception 'This slot already has a booking and cannot be deleted.';
+  end if;
+
+  delete from public.availability_slots
+  where id = p_slot_id
+  returning id into v_deleted_id;
+
+  if v_deleted_id is null then
+    raise exception 'This availability slot no longer exists.';
+  end if;
+
+  return true;
+end;
+$$;
+
+revoke all on function public.delete_availability_slot(uuid) from public;
+
+create or replace function public.mark_availability_unavailable(p_slot_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_updated_id uuid;
+begin
+  if not public.is_admin() then
+    raise exception 'Admin access required.';
+  end if;
+
+  if exists (
+    select 1
+    from public.bookings
+    where availability_slot_id = p_slot_id
+  ) then
+    raise exception 'This slot already has a booking and cannot be marked unavailable.';
+  end if;
+
+  update public.availability_slots
+  set is_booked = true
+  where id = p_slot_id
+    and starts_at > now()
+  returning id into v_updated_id;
+
+  if v_updated_id is null then
+    raise exception 'This availability slot no longer exists or is in the past.';
+  end if;
+
+  return true;
+end;
+$$;
+
+revoke all on function public.mark_availability_unavailable(uuid) from public;
 
 create or replace function public.ensure_lesson_note_matches_booking()
 returns trigger
@@ -498,3 +582,5 @@ grant execute on function public.is_admin(uuid) to anon, authenticated;
 grant execute on function public.ensure_current_user_profile(text, text) to authenticated;
 grant execute on function public.book_lesson(uuid, text, text, text, uuid, text, integer, text, text, text) to anon, authenticated;
 grant execute on function public.create_availability_slot(uuid, timestamp without time zone) to authenticated;
+grant execute on function public.delete_availability_slot(uuid) to authenticated;
+grant execute on function public.mark_availability_unavailable(uuid) to authenticated;

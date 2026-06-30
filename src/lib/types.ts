@@ -171,12 +171,24 @@ export type Database = {
         };
         Returns: string;
       };
+      delete_availability_slot: {
+        Args: {
+          p_slot_id: string;
+        };
+        Returns: boolean;
+      };
       ensure_current_user_profile: {
         Args: {
           p_full_name?: string | null;
           p_phone?: string | null;
         };
         Returns: Profile;
+      };
+      mark_availability_unavailable: {
+        Args: {
+          p_slot_id: string;
+        };
+        Returns: boolean;
       };
       is_admin: {
         Args: {
