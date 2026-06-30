@@ -118,6 +118,41 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+create or replace function public.ensure_current_user_profile(
+  p_full_name text default null,
+  p_phone text default null
+)
+returns public.profiles
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid := auth.uid();
+  v_profile public.profiles%rowtype;
+begin
+  if v_user_id is null then
+    raise exception 'Not authenticated.';
+  end if;
+
+  insert into public.profiles (id, full_name, phone, role)
+  values (
+    v_user_id,
+    nullif(trim(coalesce(p_full_name, '')), ''),
+    nullif(trim(coalesce(p_phone, '')), ''),
+    'parent'
+  )
+  on conflict (id) do update
+  set full_name = coalesce(public.profiles.full_name, excluded.full_name),
+      phone = coalesce(public.profiles.phone, excluded.phone)
+  returning * into v_profile;
+
+  return v_profile;
+end;
+$$;
+
+revoke all on function public.ensure_current_user_profile(text, text) from public;
+
 insert into public.instructors (name, color, bio)
 values
   ('Eric', 'blue', 'Calm technical coaching for confidence, safety, and stroke development.'),
@@ -460,5 +495,6 @@ create trigger ensure_lesson_note_matches_booking
   for each row execute function public.ensure_lesson_note_matches_booking();
 
 grant execute on function public.is_admin(uuid) to anon, authenticated;
+grant execute on function public.ensure_current_user_profile(text, text) to authenticated;
 grant execute on function public.book_lesson(uuid, text, text, text, uuid, text, integer, text, text, text) to anon, authenticated;
 grant execute on function public.create_availability_slot(uuid, timestamp without time zone) to authenticated;

@@ -49,3 +49,48 @@ export function getSupabaseConfig() {
 export function isSupabaseConfigured() {
   return Boolean(getSupabaseConfig());
 }
+
+export function getSupabaseConfigDiagnostics() {
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  let parsedUrl: URL | null = null;
+  let urlError: string | null = null;
+
+  if (rawUrl) {
+    try {
+      parsedUrl = new URL(rawUrl);
+    } catch (error) {
+      urlError = error instanceof Error ? error.message : "Invalid URL";
+    }
+  }
+
+  return {
+    hasUrl: Boolean(rawUrl),
+    hasAnonKey: Boolean(anonKey),
+    urlOrigin: parsedUrl?.origin ?? null,
+    urlHost: parsedUrl?.host ?? null,
+    urlProtocol: parsedUrl?.protocol ?? null,
+    urlPathname: parsedUrl?.pathname ?? null,
+    urlHasPath: parsedUrl ? parsedUrl.pathname !== "" && parsedUrl.pathname !== "/" : null,
+    urlError,
+    anonKeyType: getAnonKeyType(anonKey),
+    anonKeyLength: anonKey?.length ?? 0,
+    isConfigured: Boolean(getSupabaseConfig()),
+  };
+}
+
+function getAnonKeyType(anonKey: string | undefined) {
+  if (!anonKey) {
+    return "missing";
+  }
+
+  if (anonKey.startsWith("sb_publishable_")) {
+    return "publishable";
+  }
+
+  if (anonKey.startsWith("eyJ")) {
+    return "legacy-jwt";
+  }
+
+  return "unknown";
+}

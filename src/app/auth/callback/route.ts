@@ -1,7 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { getSupabaseConfig } from "@/lib/config";
+import { getSupabaseConfig, getSupabaseConfigDiagnostics } from "@/lib/config";
 import type { Database } from "@/lib/types";
+
+function getAuthErrorDetails(error: unknown) {
+  const record = error && typeof error === "object" ? (error as Record<string, unknown>) : {};
+
+  return {
+    name: error instanceof Error ? error.name : typeof record.name === "string" ? record.name : undefined,
+    message: error instanceof Error ? error.message : typeof record.message === "string" ? record.message : String(error),
+    status: typeof record.status === "number" || typeof record.status === "string" ? record.status : undefined,
+    code: typeof record.code === "string" ? record.code : undefined,
+  };
+}
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -33,9 +44,10 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       console.error("[auth] Failed to exchange Supabase auth code.", {
-        message: error.message,
-        name: error.name,
-        status: "status" in error ? error.status : undefined,
+        error: getAuthErrorDetails(error),
+        requestOrigin: requestUrl.origin,
+        redirectTarget: next,
+        supabase: getSupabaseConfigDiagnostics(),
       });
     }
 
@@ -43,7 +55,10 @@ export async function GET(request: NextRequest) {
   }
 
   if (code && !config) {
-    console.error("[auth] Supabase auth callback received a code but Supabase is not configured.");
+    console.error("[auth] Supabase auth callback received a code but Supabase is not configured.", {
+      requestOrigin: requestUrl.origin,
+      supabase: getSupabaseConfigDiagnostics(),
+    });
   }
 
   return NextResponse.redirect(new URL("/login", requestUrl.origin));

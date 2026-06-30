@@ -171,6 +171,13 @@ export type Database = {
         };
         Returns: string;
       };
+      ensure_current_user_profile: {
+        Args: {
+          p_full_name?: string | null;
+          p_phone?: string | null;
+        };
+        Returns: Profile;
+      };
       is_admin: {
         Args: {
           user_id?: string | null;
