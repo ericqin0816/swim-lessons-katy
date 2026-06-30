@@ -8,6 +8,24 @@ import { site } from "@/lib/config";
 export default function AboutPage() {
   const { t } = useLanguage();
   const lessonLength = t("site.lessonLength");
+  const ericHighlights = [
+    {
+      title: t("about.highlightSafetyTitle"),
+      copy: t("about.highlightSafetyCopy"),
+    },
+    {
+      title: t("about.highlightTeachingTitle"),
+      copy: t("about.highlightTeachingCopy"),
+    },
+    {
+      title: t("about.highlightClubTitle"),
+      copy: t("about.highlightClubCopy"),
+    },
+    {
+      title: t("about.highlightTeamTitle"),
+      copy: t("about.highlightTeamCopy"),
+    },
+  ];
   const instructors = [
     {
       name: "Eric",
@@ -90,6 +108,31 @@ export default function AboutPage() {
           </Card>
         ))}
       </div>
+
+      <section className="mt-10 rounded-lg border border-sky-100 bg-white p-5 shadow-sm sm:p-6">
+        <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+          <div>
+            <Eyebrow>{t("about.ericHighlightsEyebrow")}</Eyebrow>
+            <h2 className="text-3xl font-black tracking-tight text-slate-950">
+              {t("about.ericHighlightsTitle")}
+            </h2>
+            <p className="mt-4 leading-7 text-slate-600">
+              {t("about.ericHighlightsCopy")}
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {ericHighlights.map((highlight) => (
+              <div
+                key={highlight.title}
+                className="rounded-lg border border-sky-100 bg-sky-50 p-4"
+              >
+                <h3 className="font-black text-slate-950">{highlight.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{highlight.copy}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-lg bg-sky-900 p-6 text-white sm:p-8">

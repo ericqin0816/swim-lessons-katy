@@ -72,18 +72,34 @@ export const translations = {
       "If weather or pool conditions make a lesson unsafe, we will coordinate a practical reschedule.",
 
     "about.eyebrow": "About us",
-    "about.title": "Friendly, focused swim coaching in Katy.",
+    "about.title": "Patient, safety-minded swim instruction in Katy.",
     "about.copy":
-      "{siteName} is a temporary placeholder brand for a local private swim lesson business. The goal is simple: help parents book lessons with less back-and-forth while giving instructors the swimmer details they need to teach well.",
+      "{siteName} helps parents book one-hour private swim lessons with clear scheduling, swimmer details, and instructor-specific availability.",
     "about.expect": "What parents can expect",
     "about.clearBefore": "clear before booking",
     "about.allLevels": "All levels",
-    "about.ericBadge": "Patient and safety-focused",
+    "about.ericBadge": "Lifeguard certified",
     "about.ericCopy":
-      "Eric teaches with a calm, step-by-step style that helps swimmers feel safe, build confidence, and understand what to practice next.",
-    "about.ericFocus1": "Water confidence",
-    "about.ericFocus2": "Freestyle and backstroke basics",
-    "about.ericFocus3": "Stroke refinement",
+      "Hi, I'm Eric Qin, a 15-year-old student swim instructor in Katy with experience in competitive swimming, water safety instruction, and teaching younger swimmers. I have competed on JV and varsity swim teams, trained with Katy Aquatics for four years, and worked as a Katy ISD water safety instructor. My goal is to help swimmers build confidence, improve technique, and feel safer in the water through patient, personalized lessons.",
+    "about.ericFocus1": "Safety-first instruction",
+    "about.ericFocus2": "Confidence for younger swimmers",
+    "about.ericFocus3": "Technique from real swim training",
+    "about.ericHighlightsEyebrow": "Eric's background",
+    "about.ericHighlightsTitle": "Competitive swimming experience with a safety-first teaching style.",
+    "about.ericHighlightsCopy":
+      "Parents want to know who is teaching their child. Eric brings swim team experience, water safety training, and a calm lesson style focused on steady progress.",
+    "about.highlightSafetyTitle": "Safety training",
+    "about.highlightSafetyCopy":
+      "Lifeguard certified and experienced as a Katy ISD water safety instructor.",
+    "about.highlightTeachingTitle": "Teaching experience",
+    "about.highlightTeachingCopy":
+      "Has taught swim lessons and works patiently with younger swimmers as they build comfort in the water.",
+    "about.highlightClubTitle": "Club training",
+    "about.highlightClubCopy":
+      "Swam with Katy Aquatics for four years and trained one summer with Texas Elite.",
+    "about.highlightTeamTitle": "School swim background",
+    "about.highlightTeamCopy":
+      "Competed on JV and varsity, with a JV district-winning team, a butterfly medal, and first-place freestyle and medley relay finishes.",
     "about.instructor2Badge": "Confidence-building support",
     "about.instructor2Copy":
       "Instructor 2 gives patient, safety-focused private instruction for new swimmers, beginners, and families who want steady progress.",
@@ -349,18 +365,34 @@ export const translations = {
     "home.faq4Answer": "如果天气或泳池情况不安全，我们会协调合适的改期时间。",
 
     "about.eyebrow": "关于我们",
-    "about.title": "Katy 本地友好、专注的游泳指导。",
+    "about.title": "Katy 本地耐心、重视安全的游泳指导。",
     "about.copy":
-      "{siteName} 是一个本地私人游泳教学业务的临时品牌名称。目标很简单：减少家长来回沟通的时间，同时让教练提前了解学生情况，更好地上课。",
+      "{siteName} 帮助家长清楚预约一小时私人游泳课，并让教练提前了解学生情况和具体时间安排。",
     "about.expect": "家长可以期待",
     "about.clearBefore": "预约前清楚了解",
     "about.allLevels": "所有水平",
-    "about.ericBadge": "耐心并重视安全",
+    "about.ericBadge": "持有救生员认证",
     "about.ericCopy":
-      "Eric 用冷静、循序渐进的方式教学，帮助学生在水中感到安全、建立自信，并理解下一步该练习什么。",
-    "about.ericFocus1": "水中自信",
-    "about.ericFocus2": "自由泳和仰泳基础",
-    "about.ericFocus3": "泳姿改进",
+      "你好，我是 Eric Qin，一名 15 岁的 Katy 学生游泳教练。我有竞技游泳、水上安全教学和给低龄学生上游泳课的经验。我曾参加 JV 和 varsity 校队训练与比赛，在 Katy Aquatics 训练四年，也曾担任 Katy ISD 水上安全 instructor。我的目标是通过耐心、个性化的课程，帮助学生建立自信、改进技术，并在水中更有安全感。",
+    "about.ericFocus1": "安全优先的教学",
+    "about.ericFocus2": "帮助低龄学生建立自信",
+    "about.ericFocus3": "来自真实游泳训练的技术指导",
+    "about.ericHighlightsEyebrow": "Eric 的背景",
+    "about.ericHighlightsTitle": "有竞技游泳经历，并以安全为先进行教学。",
+    "about.ericHighlightsCopy":
+      "家长希望了解孩子的教练是谁。Eric 结合校队和俱乐部训练经验、水上安全教学经历，以及冷静耐心的教学方式，帮助学生稳定进步。",
+    "about.highlightSafetyTitle": "安全训练",
+    "about.highlightSafetyCopy":
+      "持有救生员认证，并有 Katy ISD 水上安全 instructor 经验。",
+    "about.highlightTeachingTitle": "教学经验",
+    "about.highlightTeachingCopy":
+      "有游泳课教学经验，能够耐心帮助低龄学生适应水、建立舒适感。",
+    "about.highlightClubTitle": "俱乐部训练",
+    "about.highlightClubCopy":
+      "在 Katy Aquatics 训练四年，并曾在一个夏天跟随 Texas Elite 训练。",
+    "about.highlightTeamTitle": "校队游泳背景",
+    "about.highlightTeamCopy":
+      "参加过 JV 和 varsity 游泳；JV 队获得 district 冠军，个人曾在蝶泳项目获奖，并在自由泳接力和混合泳接力中获得第一名。",
     "about.instructor2Badge": "建立自信的支持",
     "about.instructor2Copy":
       "Instructor 2 为新学员、初学者，以及希望稳定进步的家庭提供耐心、重视安全的私人指导。",
