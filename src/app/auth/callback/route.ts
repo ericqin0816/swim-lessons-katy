@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { getSupabaseConfig } from "@/lib/config";
 import type { Database } from "@/lib/types";
 
 export async function GET(request: NextRequest) {
@@ -7,13 +8,14 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get("code");
   const nextParam = requestUrl.searchParams.get("next") ?? "/account";
   const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/account";
+  const config = getSupabaseConfig();
 
-  if (code && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (code && config) {
     const response = NextResponse.redirect(new URL(next, requestUrl.origin));
 
     const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      config.url,
+      config.anonKey,
       {
         cookies: {
           getAll() {
@@ -28,8 +30,20 @@ export async function GET(request: NextRequest) {
       },
     );
 
-    await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      console.error("[auth] Failed to exchange Supabase auth code.", {
+        message: error.message,
+        name: error.name,
+        status: "status" in error ? error.status : undefined,
+      });
+    }
+
     return response;
+  }
+
+  if (code && !config) {
+    console.error("[auth] Supabase auth callback received a code but Supabase is not configured.");
   }
 
   return NextResponse.redirect(new URL("/login", requestUrl.origin));

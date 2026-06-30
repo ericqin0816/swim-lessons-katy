@@ -22,33 +22,83 @@ const signUpSchema = loginSchema.extend({
   phone: z.string().optional(),
 });
 
+function logAuthError(context: string, error: unknown) {
+  if (error instanceof Error) {
+    console.error(`[auth] ${context}`, {
+      message: error.message,
+      name: error.name,
+      status: "status" in error ? error.status : undefined,
+    });
+    return;
+  }
+
+  console.error(`[auth] ${context}`, error);
+}
+
 export async function signIn(_prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!email || !password) {
+    return {
+      ok: false,
+      message: "Please enter your email and password.",
+      messageKey: "message.loginMissing",
+    };
+  }
+
   const parsed = loginSchema.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
+    email,
+    password,
   });
 
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Please enter a valid email and password.",
-      messageKey: "message.loginInvalid",
+      message: "Incorrect email or password. Please try again.",
+      messageKey: "message.loginIncorrect",
     };
   }
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
+    console.error("[auth] Sign in attempted without valid Supabase environment configuration.");
     return {
       ok: false,
-      message: "Supabase is not configured yet.",
-      messageKey: "message.supabaseMissing",
+      message: "Something went wrong. Please try again.",
+      messageKey: "message.loginUnexpected",
     };
   }
 
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: parsed.data.email,
+      password: parsed.data.password,
+    });
 
-  if (error) {
-    return { ok: false, message: error.message };
+    if (error) {
+      logAuthError("Supabase signInWithPassword failed.", error);
+      const status = "status" in error ? error.status : undefined;
+
+      return {
+        ok: false,
+        message:
+          status === 400 || status === 401 || status === 403
+            ? "Incorrect email or password. Please try again."
+            : "Something went wrong. Please try again.",
+        messageKey:
+          status === 400 || status === 401 || status === 403
+            ? "message.loginIncorrect"
+            : "message.loginUnexpected",
+      };
+    }
+  } catch (error) {
+    logAuthError("Unexpected sign in exception.", error);
+    return {
+      ok: false,
+      message: "Something went wrong. Please try again.",
+      messageKey: "message.loginUnexpected",
+    };
   }
 
   revalidatePath("/", "layout");

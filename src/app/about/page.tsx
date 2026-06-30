@@ -10,20 +10,30 @@ export default function AboutPage() {
   const lessonLength = t("site.lessonLength");
   const ericHighlights = [
     {
-      title: t("about.highlightSafetyTitle"),
-      copy: t("about.highlightSafetyCopy"),
+      title: t("about.highlightCompetitiveTitle"),
+      items: [
+        t("about.highlightCompetitive1"),
+        t("about.highlightCompetitive2"),
+        t("about.highlightCompetitive3"),
+      ],
+    },
+    {
+      title: t("about.highlightAwardsTitle"),
+      items: [
+        t("about.highlightAwards1"),
+        t("about.highlightAwards2"),
+        t("about.highlightAwards3"),
+        t("about.highlightAwards4"),
+      ],
     },
     {
       title: t("about.highlightTeachingTitle"),
-      copy: t("about.highlightTeachingCopy"),
-    },
-    {
-      title: t("about.highlightClubTitle"),
-      copy: t("about.highlightClubCopy"),
-    },
-    {
-      title: t("about.highlightTeamTitle"),
-      copy: t("about.highlightTeamCopy"),
+      items: [
+        t("about.highlightTeaching1"),
+        t("about.highlightTeaching2"),
+        t("about.highlightTeaching3"),
+        t("about.highlightTeaching4"),
+      ],
     },
   ];
   const instructors = [
@@ -120,14 +130,23 @@ export default function AboutPage() {
               {t("about.ericHighlightsCopy")}
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 lg:grid-cols-3">
             {ericHighlights.map((highlight) => (
               <div
                 key={highlight.title}
                 className="rounded-lg border border-sky-100 bg-sky-50 p-4"
               >
                 <h3 className="font-black text-slate-950">{highlight.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-700">{highlight.copy}</p>
+                <div className="mt-3 grid gap-2">
+                  {highlight.items.map((item) => (
+                    <p
+                      key={item}
+                      className="rounded-lg bg-white px-3 py-2 text-sm font-semibold leading-6 text-slate-700"
+                    >
+                      {item}
+                    </p>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

@@ -36,7 +36,7 @@ export function LoginPanel() {
         </button>
       </div>
 
-      <form action={mode === "login" ? loginAction : signUpAction} className="space-y-4">
+      <form action={mode === "login" ? loginAction : signUpAction} noValidate className="space-y-4">
         {mode === "signup" ? (
           <>
             <label className="block text-sm font-semibold text-slate-700">
