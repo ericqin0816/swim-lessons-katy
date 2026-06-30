@@ -1,7 +1,6 @@
 "use client";
 
 import { type FormEvent, useActionState, useState } from "react";
-import { useRouter } from "next/navigation";
 import { signUp, type AuthState } from "@/app/actions/auth";
 import { translatedMessage, useLanguage } from "@/components/language-provider";
 import { StatusMessage } from "@/components/section";
@@ -35,8 +34,19 @@ function isInvalidCredentials(error: unknown) {
   );
 }
 
+function isEmailNotConfirmed(error: unknown) {
+  const details = getAuthErrorDetails(error);
+  const message = details.message.toLowerCase();
+  const code = details.code?.toLowerCase() ?? "";
+
+  return (
+    code.includes("email_not_confirmed") ||
+    message.includes("email not confirmed") ||
+    message.includes("confirm your email")
+  );
+}
+
 export function LoginPanel() {
-  const router = useRouter();
   const { t } = useLanguage();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [loginState, setLoginState] = useState<AuthState>(initialState);
@@ -71,20 +81,26 @@ export function LoginPanel() {
       if (error) {
         console.error("[auth] Browser signInWithPassword failed.", getAuthErrorDetails(error));
         const invalidCredentials = isInvalidCredentials(error);
+        const emailNotConfirmed = isEmailNotConfirmed(error);
 
         setLoginState({
           ok: false,
-          message: invalidCredentials
-            ? "Incorrect email or password. Please try again."
-            : "Something went wrong. Please try again.",
-          messageKey: invalidCredentials ? "message.loginIncorrect" : "message.loginUnexpected",
+          message: emailNotConfirmed
+            ? "Please confirm your email before logging in."
+            : invalidCredentials
+              ? "Incorrect email or password. Please try again."
+              : "Something went wrong. Please try again.",
+          messageKey: emailNotConfirmed
+            ? "message.loginEmailNotConfirmed"
+            : invalidCredentials
+              ? "message.loginIncorrect"
+              : "message.loginUnexpected",
         });
         return;
       }
 
       console.info("[auth] Browser signInWithPassword succeeded.");
-      router.refresh();
-      router.push("/account");
+      window.location.assign("/account");
     } catch (error) {
       console.error("[auth] Unexpected browser sign in exception.", getAuthErrorDetails(error));
       setLoginState({

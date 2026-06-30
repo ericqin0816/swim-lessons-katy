@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { site } from "@/lib/config";
 import type { Language } from "@/lib/i18n";
 
@@ -48,13 +50,33 @@ export function LanguageSwitcher() {
 export function SiteNav({
   isLoggedIn,
   showAdminLink,
-  signOutAction,
 }: {
   isLoggedIn: boolean;
   showAdminLink: boolean;
-  signOutAction: () => Promise<void>;
 }) {
   const { t } = useLanguage();
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("[auth] Browser signOut failed.", {
+          message: error.message,
+          status: "status" in error ? error.status : undefined,
+          code: "code" in error ? error.code : undefined,
+        });
+      }
+    } catch (error) {
+      console.error("[auth] Unexpected browser signOut exception.", error);
+    } finally {
+      window.location.assign("/");
+    }
+  }
 
   return (
     <nav className="flex items-center gap-2 overflow-x-auto pb-1 text-sm font-semibold text-slate-700 lg:flex-wrap lg:overflow-visible lg:pb-0">
@@ -83,14 +105,14 @@ export function SiteNav({
           >
             {t("nav.account")}
           </Link>
-          <form action={signOutAction}>
-            <button
-              type="submit"
-              className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-sky-200 hover:bg-sky-50"
-            >
-              {t("nav.signOut")}
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+          >
+            {t("nav.signOut")}
+          </button>
         </>
       ) : (
         <Link

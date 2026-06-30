@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { signOut } from "@/app/actions/auth";
 import { HeaderTagline, SiteNav } from "@/components/site-nav";
 import { getCurrentUserProfile } from "@/lib/data";
 import { site } from "@/lib/config";
@@ -26,7 +25,6 @@ export async function SiteHeader() {
         <SiteNav
           isLoggedIn={Boolean(user)}
           showAdminLink={showAdminLink}
-          signOutAction={signOut}
         />
       </div>
     </header>
