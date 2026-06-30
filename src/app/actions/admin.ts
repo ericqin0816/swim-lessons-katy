@@ -78,6 +78,12 @@ function isDuplicateSlotError(message: string) {
 }
 
 function friendlyAdminError(message: string) {
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes("schema cache") || normalized.includes("could not find the function")) {
+    return "Database setup is missing the latest availability functions. Run the updated Supabase SQL, then retry.";
+  }
+
   if (isDuplicateSlotError(message)) {
     return "This instructor already has a slot at that time.";
   }

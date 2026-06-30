@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   addAvailability,
   addLessonNote,
@@ -13,7 +13,7 @@ import { StatusMessage } from "@/components/section";
 import type { BookingWithDetails, Instructor } from "@/lib/types";
 
 const initialState: AdminState = { ok: false, message: "" };
-const bulkTimes = ["08:00", "09:00", "10:00", "11:00", "16:00", "17:00", "18:00"];
+const presetBulkTimes = ["08:00", "09:00", "10:00", "16:00", "17:00", "18:00"];
 
 export function AddAvailabilityForm({ instructors }: { instructors: Instructor[] }) {
   const [state, action, pending] = useActionState(addAvailability, initialState);
@@ -76,7 +76,28 @@ export function AddAvailabilityForm({ instructors }: { instructors: Instructor[]
 
 export function BulkAvailabilityForm({ instructors }: { instructors: Instructor[] }) {
   const [state, action, pending] = useActionState(bulkAddAvailability, initialState);
+  const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
+  const [customTime, setCustomTime] = useState("");
   const hasInstructors = instructors.length > 0;
+
+  function addTime(value: string) {
+    if (!value) {
+      return;
+    }
+
+    setSelectedTimes((current) => {
+      if (current.includes(value)) {
+        return current;
+      }
+
+      return [...current, value].sort();
+    });
+    setCustomTime("");
+  }
+
+  function removeTime(value: string) {
+    setSelectedTimes((current) => current.filter((time) => time !== value));
+  }
 
   return (
     <form action={action} className="grid gap-4">
@@ -116,16 +137,62 @@ export function BulkAvailabilityForm({ instructors }: { instructors: Instructor[
       </div>
       <fieldset className="rounded-lg border border-slate-200 p-3">
         <legend className="px-1 text-sm font-semibold text-slate-700">Times</legend>
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {bulkTimes.map((time) => (
-            <label
+        <div className="mt-2 flex flex-wrap gap-2">
+          {presetBulkTimes.map((time) => (
+            <button
               key={time}
-              className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700"
+              type="button"
+              onClick={() => addTime(time)}
+              className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1.5 text-xs font-black text-sky-800 transition hover:border-sky-200 hover:bg-sky-100"
             >
-              <input name="times" type="checkbox" value={time} className="size-4 accent-sky-600" />
-              {formatTimeLabel(time)}
-            </label>
+              + {formatTimeLabel(time)}
+            </button>
           ))}
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
+          <label className="block text-sm font-semibold text-slate-700">
+            Custom time
+            <input
+              type="time"
+              value={customTime}
+              onChange={(event) => setCustomTime(event.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => addTime(customTime)}
+            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-sky-700 sm:self-end"
+          >
+            Add time
+          </button>
+        </div>
+        <div className="mt-4 min-h-10 rounded-lg bg-slate-50 p-3">
+          {selectedTimes.length ? (
+            <div className="flex flex-wrap gap-2">
+              {selectedTimes.map((time) => (
+                <span
+                  key={time}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-slate-200"
+                >
+                  {formatTimeLabel(time)}
+                  <button
+                    type="button"
+                    onClick={() => removeTime(time)}
+                    className="rounded-full px-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                    aria-label={`Remove ${formatTimeLabel(time)}`}
+                  >
+                    x
+                  </button>
+                  <input type="hidden" name="times" value={time} />
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm font-semibold text-slate-500">
+              Add one or more times before submitting.
+            </p>
+          )}
         </div>
       </fieldset>
       {state.message ? (
